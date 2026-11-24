@@ -1,0 +1,45 @@
+# Default configuration. Every value can be overridden from the command line,
+# e.g.  python train.py --set train.epochs=60 train.batch_size=16
+
+data:
+  root: data                 # contains train/ val/ test/, each with images/ and masks/
+  image_suffix: .tiff
+  mask_suffix: .tif
+  patch_size: 256            # training crops are taken at full resolution (no downscaling)
+  patches_per_image: 16      # random crops drawn from each training image per epoch
+  max_nodata_fraction: 0.5   # skip crops that are mostly white "no data" border
+  cache_in_memory: true      # ~1.2 GB for the full Massachusetts Buildings training set
+  num_workers: 0             # keep 0 on Windows; 2-4 on Linux / Colab
+
+model:
+  base_channels: 32          # 32 -> 64 -> 128 -> 256 -> 512
+  depth: 4
+  dropout: 0.1
+
+train:
+  epochs: 40
+  batch_size: 8
+  lr: 0.001
+  weight_decay: 0.0001
+  pos_weight: 3.0            # BCE weight for the building class (class imbalance)
+  dice_weight: 1.0           # loss = BCE + dice_weight * Dice
+  early_stopping_patience: 8
+  seed: 42
+  amp: true                  # mixed precision on CUDA GPUs
+  checkpoint_dir: checkpoints
+  output_dir: outputs
+
+inference:
+  tile_size: 512
+  overlap: 64
+  threshold: 0.5             # replaced by the value tuned on the validation set
+
+population:
+  pixel_size_m: 1.0          # Massachusetts Buildings: 1 pixel = 1 m x 1 m
+  min_building_area_m2: 20   # ignore detections smaller than this (noise)
+  avg_floors: 3              # assumption used in the thesis
+  m2_per_person: 30          # living area per person (assumption used in the thesis)
+  residential_share: 1.0     # share of the footprint that is residential
+  people_per_hospital: 10000
+  people_per_market: 1500
+  people_per_base_station: 2000
